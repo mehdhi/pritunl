@@ -4,15 +4,17 @@ define([
   'backbone'
 ], function($, _, Backbone) {
   'use strict';
-  var LinkRouteModel = Backbone.Model.extend({
+  var LinkTransitModel = Backbone.Model.extend({
     defaults: {
       'id': null,
       'link_id': null,
-      'location_id': null
+      'location_id': null,
+      'transit_id': null,
+      'name': null
     },
     url: function() {
       var url = '/link/' + this.get('link_id') + '/location/' +
-        this.get('location_id') + '/route';
+        this.get('location_id') + '/transit';
 
       if (this.get('id')) {
         url += '/' + this.get('id');
@@ -22,5 +24,5 @@ define([
     }
   });
 
-  return LinkRouteModel;
+  return LinkTransitModel;
 });

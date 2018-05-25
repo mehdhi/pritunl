@@ -483,10 +483,10 @@ def link_location_host_delete(link_id, location_id, host_id):
 
     return utils.jsonify({})
 
-@app.app.route('/link/<link_id>/location/<location_id>/exclude',
+@app.app.route('/link/<link_id>/location/<location_id>/peer',
     methods=['POST'])
 @auth.session_auth
-def link_location_exclude_post(link_id, location_id):
+def link_location_peer_post(link_id, location_id):
     if not settings.local.sub_plan or \
             'enterprise' not in settings.local.sub_plan:
         return flask.abort(404)
@@ -502,21 +502,20 @@ def link_location_exclude_post(link_id, location_id):
     if not loc:
         return flask.abort(404)
 
-    exclude_id = utils.ObjectId(flask.request.json.get('exclude_id'))
-    loc.add_exclude(exclude_id)
+    peer_id = utils.ObjectId(flask.request.json.get('peer_id'))
+    loc.remove_exclude(peer_id)
 
     lnk.commit('excludes')
+    loc.commit('transit_excludes')
 
     event.Event(type=LINKS_UPDATED)
 
-    return utils.jsonify({
-        'location_id': exclude_id,
-    })
+    return utils.jsonify({})
 
-@app.app.route('/link/<link_id>/location/<location_id>/exclude/<exclude_id>',
+@app.app.route('/link/<link_id>/location/<location_id>/peer/<peer_id>',
     methods=['DELETE'])
 @auth.session_auth
-def link_location_exclude_delete(link_id, location_id, exclude_id):
+def link_location_peer_delete(link_id, location_id, peer_id):
     if not settings.local.sub_plan or \
             'enterprise' not in settings.local.sub_plan:
         return flask.abort(404)
@@ -532,9 +531,65 @@ def link_location_exclude_delete(link_id, location_id, exclude_id):
     if not loc:
         return flask.abort(404)
 
-    loc.remove_exclude(exclude_id)
+    loc.add_exclude(peer_id)
 
     lnk.commit('excludes')
+    loc.commit('transit_excludes')
+
+    event.Event(type=LINKS_UPDATED)
+
+    return utils.jsonify({})
+
+@app.app.route('/link/<link_id>/location/<location_id>/transit',
+    methods=['POST'])
+@auth.session_auth
+def link_location_transit_post(link_id, location_id):
+    if not settings.local.sub_plan or \
+            'enterprise' not in settings.local.sub_plan:
+        return flask.abort(404)
+
+    if settings.app.demo_mode:
+        return utils.demo_blocked()
+
+    lnk = link.get_by_id(link_id)
+    if not lnk or lnk.type == DIRECT:
+        return flask.abort(404)
+
+    loc = lnk.get_location(location_id)
+    if not loc:
+        return flask.abort(404)
+
+    transit_id = utils.ObjectId(flask.request.json.get('transit_id'))
+    loc.add_transit(transit_id)
+
+    loc.commit('transits')
+
+    event.Event(type=LINKS_UPDATED)
+
+    return utils.jsonify({})
+
+@app.app.route('/link/<link_id>/location/<location_id>/transit/<transit_id>',
+    methods=['DELETE'])
+@auth.session_auth
+def link_location_transit_delete(link_id, location_id, transit_id):
+    if not settings.local.sub_plan or \
+            'enterprise' not in settings.local.sub_plan:
+        return flask.abort(404)
+
+    if settings.app.demo_mode:
+        return utils.demo_blocked()
+
+    lnk = link.get_by_id(link_id)
+    if not lnk or lnk.type == DIRECT:
+        return flask.abort(404)
+
+    loc = lnk.get_location(location_id)
+    if not loc:
+        return flask.abort(404)
+
+    loc.remove_transit(transit_id)
+
+    loc.commit('transits')
 
     event.Event(type=LINKS_UPDATED)
 
@@ -600,7 +655,12 @@ def link_state_put():
     host.local_address = flask.request.json.get('local_address')
     host.address6 = flask.request.json.get('address6')
 
-    data = json.dumps(host.get_state(), default=lambda x: str(x))
+    state, active = host.get_state()
+    if active:
+        host.location.status = flask.request.json.get('status') or None
+        host.location.commit('status')
+
+    data = json.dumps(state, default=lambda x: str(x))
     data += (16 - len(data) % 16) * '\x00'
 
     iv = os.urandom(16)

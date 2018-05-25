@@ -216,7 +216,7 @@ def sso_request_get():
                 'state': state,
                 'secret': secret,
             },
-                             )
+        )
 
         if resp.status_code != 200:
             logger.error('Google auth server error', 'sso',
@@ -252,7 +252,7 @@ def sso_request_get():
                 'state': state,
                 'secret': secret,
             },
-                             )
+        )
 
         if resp.status_code != 200:
             logger.error('Slack auth server error', 'sso',
@@ -291,7 +291,7 @@ def sso_request_get():
                 'issuer_url': settings.app.sso_saml_issuer_url,
                 'cert': settings.app.sso_saml_cert,
             },
-                             )
+        )
 
         if resp.status_code != 200:
             logger.error('Saml auth server error', 'sso',
@@ -384,7 +384,7 @@ def sso_callback_get():
             not_found = False
             for org_name in org_names:
                 org = organization.get_by_name(
-                    utils.filter_str(org_name),
+                    utils.filter_unicode(org_name),
                     fields=('_id'),
                 )
                 if org:
@@ -395,9 +395,9 @@ def sso_callback_get():
                     not_found = True
 
             if not_found:
-                logger.warning('Supplied saml org names do not exists',
+                logger.warning('Supplied org names do not exists',
                     'sso',
-                    sso_type='saml',
+                    sso_type=doc.get('type'),
                     user_name=username,
                     user_email=email,
                     org_names=org_names,
@@ -433,7 +433,7 @@ def sso_callback_get():
         org_id = settings.app.sso_org
         for org_name in org_names:
             org = organization.get_by_name(
-                utils.filter_str(org_name),
+                utils.filter_unicode(org_name),
                 fields=('_id'),
             )
             if org:
@@ -444,9 +444,9 @@ def sso_callback_get():
                 not_found = True
 
         if not_found:
-            logger.warning('Supplied saml org names do not exists',
+            logger.warning('Supplied org names do not exists',
                 'sso',
-                sso_type='saml',
+                sso_type=doc.get('type'),
                 user_name=username,
                 user_email=email,
                 org_names=org_names,
@@ -499,7 +499,7 @@ def sso_callback_get():
             google_groups = sorted(google_groups)
             for org_name in google_groups:
                 org = organization.get_by_name(
-                    utils.filter_str(org_name),
+                    utils.filter_unicode(org_name),
                     fields=('_id'),
                 )
                 if org:
@@ -510,9 +510,9 @@ def sso_callback_get():
                     not_found = True
 
             if not_found:
-                logger.warning('Supplied saml org names do not exists',
+                logger.warning('Supplied org names do not exists',
                     'sso',
-                    sso_type='saml',
+                    sso_type=doc.get('type'),
                     user_name=username,
                     user_email=email,
                     org_names=google_groups,
@@ -678,8 +678,8 @@ def sso_yubico_post():
     key = utils.filter_str(flask.request.json.get('key')) or None
 
     if sso_mode not in (GOOGLE_YUBICO_AUTH, SLACK_YUBICO_AUTH,
-                        SAML_YUBICO_AUTH, SAML_OKTA_YUBICO_AUTH,
-                        SAML_ONELOGIN_YUBICO_AUTH):
+            SAML_YUBICO_AUTH, SAML_OKTA_YUBICO_AUTH,
+            SAML_ONELOGIN_YUBICO_AUTH):
         return flask.abort(404)
 
     if not token or not key:

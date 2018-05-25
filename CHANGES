@@ -1,6 +1,54 @@
 Pritunl Changelog
 =================
 
+Version 1.29.1705.7 2018-05-14
+------------------------------
+
+Improve DNS server
+
+Version 1.29.1695.84 2018-05-04
+-------------------------------
+
+Improve single sign-on
+
+Version 1.29.1680.74 2018-04-19
+-------------------------------
+
+Improve server routing
+
+Version 1.29.1675.99 2018-04-14
+-------------------------------
+
+Update Lets Encrypt support
+Fix routing issue
+
+Version 1.29.1670.66 2018-04-09
+-------------------------------
+
+Server routing improvements
+
+Version 1.29.1669.3 2018-04-08
+------------------------------
+
+Server NAT routing improvements
+
+Version 1.29.1666.76 2018-04-05
+-------------------------------
+
+Host interface improvements
+
+Version 1.29.1666.4 2018-04-05
+------------------------------
+
+Add link transit peers
+
+Version 1.29.1663.38 2018-04-02
+-------------------------------
+
+Logging improvements
+Added monitoring metrics
+Link improvements
+
 Version 1.29.1657.94 2018-03-27
 -------------------------------
 

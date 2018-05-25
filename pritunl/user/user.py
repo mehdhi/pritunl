@@ -309,11 +309,20 @@ class User(mongo.MongoObject):
                         settings.app.license,
                     ))
 
-                if resp.status_code == 200:
-                    return True
+                if resp.status_code != 200:
+                    logger.error('Google auth check request error', 'user',
+                        user_id=self.id,
+                        user_name=self.name,
+                        status_code=resp.status_code,
+                        content=resp.content,
+                    )
+                    return False
+
+                return True
             except:
                 logger.exception('Google auth check error', 'user',
                     user_id=self.id,
+                    user_name=self.name,
                 )
             return False
         elif SLACK_AUTH in self.auth_type and SLACK_AUTH in sso_mode:
@@ -331,11 +340,20 @@ class User(mongo.MongoObject):
                         settings.app.license,
                     ))
 
-                if resp.status_code == 200:
-                    return True
+                if resp.status_code != 200:
+                    logger.error('Slack auth check request error', 'user',
+                        user_id=self.id,
+                        user_name=self.name,
+                        status_code=resp.status_code,
+                        content=resp.content,
+                    )
+                    return False
+
+                return True
             except:
                 logger.exception('Slack auth check error', 'user',
                     user_id=self.id,
+                    user_name=self.name,
                 )
             return False
         elif SAML_ONELOGIN_AUTH in self.auth_type and \
@@ -348,6 +366,7 @@ class User(mongo.MongoObject):
             except:
                 logger.exception('OneLogin auth check error', 'user',
                     user_id=self.id,
+                    user_name=self.name,
                 )
             return False
         elif SAML_OKTA_AUTH in self.auth_type and \
@@ -360,6 +379,7 @@ class User(mongo.MongoObject):
             except:
                 logger.exception('Okta auth check error', 'user',
                     user_id=self.id,
+                    user_name=self.name,
                 )
             return False
         elif RADIUS_AUTH in self.auth_type and RADIUS_AUTH in sso_mode:
@@ -368,6 +388,7 @@ class User(mongo.MongoObject):
             except:
                 logger.exception('Radius auth check error', 'user',
                     user_id=self.id,
+                    user_name=self.name,
                 )
             return False
         elif PLUGIN_AUTH in self.auth_type:
@@ -380,6 +401,7 @@ class User(mongo.MongoObject):
             except:
                 logger.exception('Plugin auth check error', 'user',
                     user_id=self.id,
+                    user_name=self.name,
                 )
             return False
 
@@ -921,15 +943,21 @@ class User(mongo.MongoObject):
 
         return links
 
-    def audit_event(self, event_type, event_msg, remote_addr=None):
+    def audit_event(self, event_type, event_msg, remote_addr=None, **kwargs):
         if settings.app.auditing != ALL:
             return
 
         timestamp = utils.now()
 
+        org_name = None
+        if self.org:
+            org_name = self.org.name
+
         self.audit_collection.insert({
             'user_id': self.id,
+            'user_name': self.name,
             'org_id': self.org_id,
+            'org_name': org_name,
             'timestamp': timestamp,
             'type': event_type,
             'remote_addr': remote_addr,
@@ -941,22 +969,28 @@ class User(mongo.MongoObject):
             host_id=settings.local.host_id,
             host_name=settings.local.host.name,
             user_id=self.id,
+            user_name=self.name,
             org_id=self.org_id,
+            org_name=org_name,
             timestamp=timestamp,
             type=event_type,
             remote_addr=remote_addr,
             message=event_msg,
+            **kwargs
         )
 
         logger.info(
             'Audit event',
             'audit',
             user_id=self.id,
+            user_name=self.name,
             org_id=self.org_id,
+            org_name=org_name,
             timestamp=timestamp,
             type=event_type,
             remote_addr=remote_addr,
             message=event_msg,
+            **kwargs
         )
 
     def get_audit_events(self):
